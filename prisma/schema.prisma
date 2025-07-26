@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model achievements {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String?   @db.Uuid
+  title       String
+  description String
+  link        String?
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  users       users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model connection_requests {
+  id                                           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sender_id                                    String          @db.Uuid
+  receiver_id                                  String          @db.Uuid
+  status                                       String          @default("PENDING")
+  created_at                                   DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at                                   DateTime        @default(now()) @db.Timestamptz(6)
+  users_connection_requests_receiver_idTousers users           @relation("connection_requests_receiver_idTousers", fields: [receiver_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_connection_requests_sender_idTousers   users           @relation("connection_requests_sender_idTousers", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  notifications                                notifications[]
+
+  @@unique([sender_id, receiver_id], map: "unique_connection_pair")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model matches {
+  id                            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user1_id                      String          @db.Uuid
+  user2_id                      String          @db.Uuid
+  matched_at                    DateTime        @default(now()) @db.Timestamptz(6)
+  users_matches_user1_idTousers users           @relation("matches_user1_idTousers", fields: [user1_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_matches_user2_idTousers users           @relation("matches_user2_idTousers", fields: [user2_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  notifications                 notifications[]
+
+  @@unique([user1_id, user2_id], map: "unique_match_pair")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model notifications {
+  id                                         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                                    String               @db.Uuid
+  type                                       String
+  title                                      String
+  message                                    String
+  related_user_id                            String?              @db.Uuid
+  connection_request_id                      String?              @db.Uuid
+  match_id                                   String?              @db.Uuid
+  is_read                                    Boolean              @default(false)
+  created_at                                 DateTime             @default(now()) @db.Timestamptz(6)
+  connection_requests                        connection_requests? @relation(fields: [connection_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  matches                                    matches?             @relation(fields: [match_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_notifications_related_user_idTousers users?               @relation("notifications_related_user_idTousers", fields: [related_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_notifications_user_idTousers         users                @relation("notifications_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model users {
+  id                                                         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                                                      String                  @unique
+  full_name                                                  String
+  college                                                    String
+  department                                                 String
+  academic_year                                              Int
+  about                                                      String?
+  interests                                                  String[]                @default([])
+  tech_skills                                                String[]                @default([])
+  creative_skills                                            String[]                @default([])
+  sports_skills                                              String[]                @default([])
+  leadership_skills                                          String[]                @default([])
+  other_skills                                               String[]                @default([])
+  github                                                     String?
+  linkedin                                                   String?
+  twitter                                                    String?
+  personal_website                                           String?
+  instagram                                                  String?
+  behance                                                    String?
+  weekly_availability                                        String?
+  time_commitment                                            String?
+  looking_for                                                String[]                @default([])
+  meeting_preference                                         String?
+  personality_tags                                           String[]                @default([])
+  created_at                                                 DateTime?               @default(now()) @db.Timestamptz(6)
+  updated_at                                                 DateTime?               @default(now()) @db.Timestamptz(6)
+  gender                                                     String?
+  avatar_url                                                 String?
+  place                                                      String?
+  state                                                      String?
+  pass_out_year                                              Int?
+  avatar_regeneration_count                                  Int                     @default(0)
+  age_group                                                  String                  @default("25_to_29")
+  book_interests                                             String[]                @default(["fiction", "non-fiction"])
+  movie_interests                                            String[]                @default(["drama", "comedy"])
+  podcast_interests                                          String[]                @default(["news", "technology"])
+  tv_show_interests                                          String[]                @default(["drama", "comedy"])
+  brand_interests                                            String[]                @default(["technology", "lifestyle"])
+  favorite_books                                             String[]                @default(["The Alchemist", "1984", "To Kill a Mockingbird"])
+  favorite_movies                                            String[]                @default(["The Shawshank Redemption", "The Godfather", "Pulp Fiction"])
+  favorite_podcasts                                          String[]                @default(["This American Life", "Radiolab", "Serial"])
+  favorite_tv_shows                                          String[]                @default(["Breaking Bad", "Friends", "The Office"])
+  favorite_brands                                            String[]                @default(["Apple", "Nike", "Spotify"])
+  content_rating_preference                                  String                  @default("PG-13")
+  min_popularity_threshold                                   Float                   @default(0.3)
+  recommendation_preferences                                 Json                    @default("{\"max_product_price\": null, \"min_product_rating\": 4.0, \"prefer_recent_content\": true, \"include_explicit_content\": false, \"max_recommendations_per_domain\": 10, \"product_categories_of_interest\": [\"electronics\", \"fashion\", \"books\", \"gaming\", \"sports\"]}")
+  embedding                                                  Unsupported("vector")?
+  product_interests                                          String[]                @default(["electronics", "fashion", "home_goods", "books", "gaming", "sports"])
+  favorite_products                                          String[]                @default(["iPhone 15", "Sony WH-1000XM5 Headphones", "Nintendo Switch", "Kindle Paperwhite", "Nike Air Max"])
+  onboarding_complete                                        Boolean?
+  chatHistory                                                ChatHistory[]
+  ExploreQueue_ExploreQueue_recommendedUserIdTousers         ExploreQueue[]          @relation("ExploreQueue_recommendedUserIdTousers")
+  ExploreQueue_ExploreQueue_userIdTousers                    ExploreQueue[]          @relation("ExploreQueue_userIdTousers")
+  recommendation_history                                     RecommendationHistory[]
+  achievements                                               achievements[]
+  chat_rooms_as_user1                                        chat_rooms[]            @relation("chat_rooms_user1")
+  chat_rooms_as_user2                                        chat_rooms[]            @relation("chat_rooms_user2")
+  connection_requests_connection_requests_receiver_idTousers connection_requests[]   @relation("connection_requests_receiver_idTousers")
+  connection_requests_connection_requests_sender_idTousers   connection_requests[]   @relation("connection_requests_sender_idTousers")
+  matches_matches_user1_idTousers                            matches[]               @relation("matches_user1_idTousers")
+  matches_matches_user2_idTousers                            matches[]               @relation("matches_user2_idTousers")
+  messages_sent                                              messages[]              @relation("messages_users")
+  notifications_notifications_related_user_idTousers         notifications[]         @relation("notifications_related_user_idTousers")
+  notifications_notifications_user_idTousers                 notifications[]         @relation("notifications_user_idTousers")
+  product_swipe_queue_for                                    ProductSwipeQueue[]     @relation("product_swipe_queue_for")
+  product_swipes_by                                  ProductSwipe[]          @relation("product_swipes_by") // New: Inverse relation for ProductSwipe
+  in_swipe_queue_of                                          SwipeQueue[]            @relation("in_swipe_queue_of")
+  swipe_queue_for                                            SwipeQueue[]            @relation("swipe_queue_for")
+  swipes_by                                                  Swipe[]                 @relation("swipes_by")
+  swipes_on                                                  Swipe[]                 @relation("swipes_on")
+}
+
+/// ChatRoom: One per matched user pair
+model chat_rooms {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user1_id        String     @db.Uuid
+  user2_id        String     @db.Uuid
+  created_at      DateTime   @default(now()) @db.Timestamptz(6)
+  last_message_at DateTime?  @db.Timestamptz(6)
+  user1           users      @relation("chat_rooms_user1", fields: [user1_id], references: [id], onDelete: Cascade)
+  user2           users      @relation("chat_rooms_user2", fields: [user2_id], references: [id], onDelete: Cascade)
+  messages        messages[]
+
+  @@unique([user1_id, user2_id], map: "unique_chat_pair")
+}
+
+/// Message: All messages for a chat room
+model messages {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chat_id    String     @db.Uuid
+  sender_id  String     @db.Uuid
+  content    String
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  read       Boolean    @default(false)
+  chat_rooms chat_rooms @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  users      users      @relation("messages_users", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([chat_id, created_at], map: "idx_messages_chat_id_created_at")
+  @@map("messages")
+}
+
+model Swipe {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId  String         @map("source_id") @db.Uuid
+  targetId  String         @map("target_id") @db.Uuid
+  direction SwipeDirection
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  source    users          @relation("swipes_by", fields: [sourceId], references: [id], onDelete: Cascade)
+  target    users          @relation("swipes_on", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+  @@index([sourceId])
+  @@map("swipes")
+}
+
+model SwipeQueue {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  targetId  String   @map("target_id") @db.Uuid
+  score     Float
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  target    users    @relation("in_swipe_queue_of", fields: [targetId], references: [id], onDelete: Cascade)
+  user      users    @relation("swipe_queue_for", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetId])
+  @@index([userId, position])
+  @@map("swipe_queues")
+}
+
+model ExploreQueue {
+  id                                          String             @id
+  userId                                      String             @db.Uuid
+  recommendedUserId                           String             @db.Uuid
+  recommendationType                          RecommendationType
+  score                                       Float
+  rank                                        Int
+  createdAt                                   DateTime           @default(now())
+  updatedAt                                   DateTime
+  users_ExploreQueue_recommendedUserIdTousers users              @relation("ExploreQueue_recommendedUserIdTousers", fields: [recommendedUserId], references: [id], onDelete: Cascade)
+  users_ExploreQueue_userIdTousers            users              @relation("ExploreQueue_userIdTousers", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recommendedUserId, recommendationType])
+  @@index([userId, recommendationType, rank])
+}
+
+model ChatHistory {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  message   String
+  response  String
+  context   Json?
+  createdAt DateTime @default(now())
+  title     String   @default("New Chat")
+  subtitle  String   @default("")
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Track user interactions with cross-domain recommendations
+model RecommendationHistory {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String   @db.Uuid
+  entity_id           String
+  entity_type         String
+  entity_title        String
+  recommendation_type String
+  relevance_score     Float
+  user_action         String?
+  explanation         String?
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  user                users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, entity_type])
+  @@index([userId, recommendation_type])
+  @@index([userId, created_at])
+}
+
+model ProductSwipe {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId  String         @map("source_id") @db.Uuid
+  productId String         @map("product_id")
+  direction SwipeDirection
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  source    users          @relation("product_swipes_by", fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, productId])
+  @@map("product_swipes")
+}
+
+model ProductSwipeQueue {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  productId         String    @map("product_id")
+  productTitle      String?   @map("product_title") // New: To store the product's title/name
+  productImageUrl   String?   @map("product_image_url") // New: To store the product's image URL
+  productPageUrl    String?   @map("product_page_url") // New: To store the product's details page URL
+  productRating     Float?    @map("product_rating") // New: To store the product's rating
+  productNumReviews Int?      @map("product_num_reviews") // New: To store the number of reviews
+  productPrice      String?   @map("product_price") // New: To store the product's price (e.g., "$64.97")
+  productStoreName  String?   @map("product_store_name") // New: To store the store name where it's offered
+  productDescription String?  @map("product_description") // Add new description field
+  productDetails    Json?     @map("product_details") // New: To store the full raw product JSON for flexibility
+  score             Float
+  position          Int
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user              users     @relation("product_swipe_queue_for", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, productId])
+  @@index([userId, position])
+  @@map("product_swipe_queues")
+}
+
+enum SwipeDirection {
+  LEFT
+  RIGHT
+}
+
+enum RecommendationType {
+  PERFECT_MATCH
+  HOT_MATCH
+  RECOMMENDED
+  COLLEGE_TOP
+  INTENT_HIGHLIGHT
+}
