@@ -25,9 +25,10 @@ interface ChatMessage {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
 ) {
-  console.log("GET: Received request for chat with id:", params.id);
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
+  console.log("GET: Received request for chat with id:", id);
   try {
     
     console.log("GET: Supabase client created.");
@@ -50,9 +51,11 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
     console.log("GET: User found:", user);
-
+    if (!id) {
+      return NextResponse.json({ error: "Chat id not found" }, { status: 404 });
+    }
     const chat = await prisma.chatHistory.findUnique({
-      where: { id: params.id },
+      where: { id: id},
     });
 
     if (!chat || chat.userId !== user.id) {
@@ -60,13 +63,13 @@ export async function GET(
     }
 
     // Safely parse context and handle messages
-    const context = safeJsonParse(chat.context);
-    console.log("GET: Parsed context:", context);
+    const contextData = safeJsonParse(chat.context);
+    console.log("GET: Parsed context:", contextData);
     let messages: ChatMessage[] = [];
-    if (Array.isArray(context)) {
-      messages = context;
-    } else if (context && Array.isArray(context.messages)) {
-      messages = context.messages;
+    if (Array.isArray(contextData)) {
+      messages = contextData;
+    } else if (contextData && Array.isArray(contextData.messages)) {
+      messages = contextData.messages;
     }
     console.log("GET: Processed messages:", messages);
 
@@ -87,8 +90,9 @@ export async function GET(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  ) {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
   try {
     const supabase = createRouteHandlerClient({ cookies });
     const { data: { session } } = await supabase.auth.getSession();
@@ -107,9 +111,11 @@ export async function DELETE(
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-
+    if (!id) {
+      return NextResponse.json({ error: "Chat id not found" }, { status: 404 });
+    }
     const chat = await prisma.chatHistory.findUnique({
-      where: { id: params.id },
+      where: { id: id || "" },
     });
 
     if (!chat || chat.userId !== user.id) {
@@ -117,7 +123,7 @@ export async function DELETE(
     }
 
     await prisma.chatHistory.delete({
-      where: { id: params.id },
+      where: { id: id || "" },
     });
 
     return NextResponse.json({ success: true });

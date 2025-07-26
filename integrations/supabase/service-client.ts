@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './types';
+  import { createClient } from '@supabase/supabase-js';
+  import type { Database } from './types';
 
 // Service role client that bypasses RLS
 // This should only be used in server-side API routes

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
   // If no JWT or user not found, fall back to session from cookie
   if (!session) {
-    const { data } = await supabaseService.auth.getSession();
+    const { data } = await supabase.auth.getSession();
     if (data.session) {
       session = data.session;
     }
