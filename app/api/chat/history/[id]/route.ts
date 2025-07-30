@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Import the singleton Prisma client
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { supabase } from "@/integrations/supabase/client";
+import { use } from "react";
 
 // Helper function for safe JSON parsing
 const safeJsonParse = (data: unknown): any => {
@@ -24,13 +24,15 @@ interface ChatMessage {
 }
 
 export async function GET(
-  req: NextRequest,
-) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
-  console.log("GET: Received request for chat with id:", id);
+  req: Request,
+  {params}: {params: Promise<{ id: string }>} 
+): Promise<NextResponse> {
   try {
-    
+    const supabase = createRouteHandlerClient({ cookies });
+    const authHeader = req.headers.get('Authorization');
+    const jwt = authHeader?.split('Bearer ')[1];
+    const { id } = await params;
+   
     console.log("GET: Supabase client created.");
     const { data: { session } } = await supabase.auth.getSession();
     console.log("GET: Session retrieved:", session);
@@ -55,7 +57,7 @@ export async function GET(
       return NextResponse.json({ error: "Chat id not found" }, { status: 404 });
     }
     const chat = await prisma.chatHistory.findUnique({
-      where: { id: id},
+      where: { id: id },
     });
 
     if (!chat || chat.userId !== user.id) {
@@ -89,13 +91,14 @@ export async function GET(
 }
 
 export async function DELETE(
-  req: NextRequest,
-  ) {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
+  req: Request,
+  {params}: {params: Promise<{ id: string }>} 
+): Promise<NextResponse> {
   try {
     const supabase = createRouteHandlerClient({ cookies });
     const { data: { session } } = await supabase.auth.getSession();
+
+    const { id } = await params;
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -115,7 +118,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Chat id not found" }, { status: 404 });
     }
     const chat = await prisma.chatHistory.findUnique({
-      where: { id: id || "" },
+      where: { id: id },
     });
 
     if (!chat || chat.userId !== user.id) {
@@ -123,7 +126,7 @@ export async function DELETE(
     }
 
     await prisma.chatHistory.delete({
-      where: { id: id || "" },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });

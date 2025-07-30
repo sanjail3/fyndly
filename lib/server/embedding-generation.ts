@@ -16,7 +16,12 @@ function generateEmbeddingText(user: any): string {
     ...(user.looking_for ?? []),
     user.department ?? "",
     user.college ?? "",
-    user.place ?? ""
+    user.place ?? "",
+    // Add favorites data for better recommendations
+    ...(user.favorite_books ?? []),
+    ...(user.favorite_movies ?? []),
+    ...(user.favorite_podcasts ?? []),
+    ...(user.favorite_brands ?? [])
   ].filter(Boolean);
 
   return fields.join(" ");

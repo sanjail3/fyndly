@@ -7,7 +7,7 @@ import { supabaseService } from '@/integrations/supabase/service-client';
 export async function POST(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
-    const { data: { session } } = await supabaseService.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,6 +17,8 @@ export async function POST(request: NextRequest) {
     const {
       basicInfo,
       interests,
+      favorites,
+      analyzedInterests,
       skills,
       about,
       achievements,
@@ -51,6 +53,18 @@ export async function POST(request: NextRequest) {
       leadership_skills: skills?.leadership || [],
       other_skills: skills?.other || [],
       
+      // Favorites data
+      favorite_books: favorites?.books || [],
+      favorite_movies: favorites?.movies || [],
+      favorite_podcasts: favorites?.podcasts || [],
+      favorite_brands: favorites?.brands || [],
+      
+      // Auto-detected interests based on favorites
+      book_interests: analyzedInterests?.book_interests || ["fiction", "non-fiction"],
+      movie_interests: analyzedInterests?.movie_interests || ["drama", "comedy"],
+      podcast_interests: analyzedInterests?.podcast_interests || ["news", "technology"],
+      tv_show_interests: analyzedInterests?.tv_show_interests || ["drama", "comedy"],
+      
       // Social Links
       github: socialLinks?.github || null,
       linkedin: socialLinks?.linkedin || null,
@@ -70,6 +84,7 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('Saving user profile via API...');
+    console.log('Analyzed interests being saved:', analyzedInterests);
 
     // Use Prisma to insert/update user data (bypasses RLS)
     const user = await prisma.users.upsert({
@@ -100,22 +115,16 @@ export async function POST(request: NextRequest) {
 
     console.log('User profile saved successfully');
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email
-      }
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Profile saved successfully',
+      analyzedInterests: analyzedInterests
     });
 
-  } catch (error) {
-    console.error('Error saving onboarding data:', error);
+  } catch (error: any) {
+    console.error('Error saving user profile:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to save profile data',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: error.message || 'Failed to save profile' },
       { status: 500 }
     );
   }

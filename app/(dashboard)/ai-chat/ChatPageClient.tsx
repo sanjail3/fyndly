@@ -51,9 +51,9 @@ export default function ChatPage() {
       type: "bot",
       isHero: true,
       content: {
-        title: "Launch Your Next Big Idea",
-        subtitle: "Let's validate your startup concept and transform it into a successful venture.",
-        prompt: "What startup are you building? I'll help find the perfect investors for you!"
+        title: "Discover Your Perfect Connections",
+        subtitle: "Find like-minded people, discover amazing content, and build meaningful relationships.",
+        prompt: "What are you looking for? I can help you find friends, recommend books, movies, podcasts, TV shows, and more!"
       }
     }
   ]);
@@ -250,9 +250,9 @@ export default function ChatPage() {
         type: "bot",
         isHero: true,
         content: {
-          title: "Launch Your Next Big Idea",
-          subtitle: "Let's validate your startup concept and transform it into a successful venture.",
-          prompt: "What startup are you building? I'll help find the perfect investors for you!"
+          title: "Discover Your Perfect Connections",
+          subtitle: "Find like-minded people, discover amazing content, and build meaningful relationships.",
+          prompt: "What are you looking for? I can help you find friends, recommend books, movies, podcasts, TV shows, and more!"
         }
       }
     ]);
@@ -292,9 +292,9 @@ export default function ChatPage() {
                type: "bot",
                isHero: true,
                content: {
-                 title: "Launch Your Next Big Idea",
-                 subtitle: "Let's validate your startup concept and transform it into a successful venture.",
-                 prompt: "What startup are you building? I'll help find the perfect investors for you!"
+                 title: "Discover Your Perfect Connections",
+                 subtitle: "Find like-minded people, discover amazing content, and build meaningful relationships.",
+                 prompt: "What are you looking for? I can help you find friends, recommend books, movies, podcasts, TV shows, and more!"
                }
              }
            ]);
@@ -446,11 +446,12 @@ export default function ChatPage() {
             
             if (lastBotIndex >= 0) {
               const loadingMessages = [
-                "Analyzing your startup profile...",
-                "Matching with potential investors...",
-                "Searching our database for the best matches...",
-                "Finding investors who specialize in your industry...",
-                "Looking for investors who focus on your stage..."
+                "Analyzing your interests and preferences...",
+                "Finding like-minded people in your area...",
+                "Searching for content that matches your taste...",
+                "Looking for friends who share your interests...",
+                "Discovering recommendations just for you...",
+                "Matching you with the perfect connections..."
               ];
               const randomIndex = Math.floor(Math.random() * loadingMessages.length);
               
@@ -706,7 +707,7 @@ export default function ChatPage() {
             if (lastMessage && lastMessage.type === "bot") {
               baseMessages[baseMessages.length - 1] = {
                 ...lastMessage,
-                content: "\n\nI've found some friends that might be a good match for you:",
+                content: "\n\nI've found some amazing people that might be perfect matches for you:",
                 isFormatted: false,
                 suggestions: formattedFriends
               };
@@ -714,7 +715,7 @@ export default function ChatPage() {
               baseMessages.push({
                 type: "bot",
                 role: "assistant",
-                content: "\n\nI've found some friends that might be a good match for you:",
+                content: "\n\nI've found some amazing people that might be perfect matches for you:",
                 isFormatted: false,
                 suggestions: formattedFriends
               });
@@ -749,14 +750,14 @@ export default function ChatPage() {
             if (lastMessage && lastMessage.type === "bot") {
               baseMessages[baseMessages.length - 1] = {
                 ...lastMessage,
-                content: "Sorry, I couldn't find any friends at the moment.",
+                content: "Sorry, I couldn't find any matches at the moment. Try adjusting your preferences!",
                 isFormatted: false,
               };
             } else {
               baseMessages.push({
                 type: "bot",
                 role: "assistant",
-                content: "Sorry, I couldn't find any friends at the moment.",
+                content: "Sorry, I couldn't find any matches at the moment. Try adjusting your preferences!",
                 isFormatted: false,
               });
             }

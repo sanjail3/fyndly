@@ -1,4 +1,6 @@
 
+import TasteAnalysisHeroCTA from "./TasteAnalysisHeroCTA";
+
 interface HeroSectionProps {
   scrollY: number;
 }
@@ -33,6 +35,9 @@ const HeroSection = ({ scrollY }: HeroSectionProps) => {
               🎓 Campus Network
             </span>
           </div>
+          
+          {/* Taste Analysis CTA */}
+          <TasteAnalysisHeroCTA />
         </div>
       </div>
     </div>

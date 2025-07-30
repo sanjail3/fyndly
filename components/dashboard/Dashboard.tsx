@@ -9,6 +9,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import ExploreFeed from "./ExploreFeed";
 import { supabase } from "@/integrations/supabase/client";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
+import AiButton from '@/components/animata/button/ai-button';
 
 interface DashboardProps {
   children?: React.ReactNode;
@@ -36,6 +37,43 @@ function LoadingIcon({ size = 64, message }: { size?: number; message?: string }
     </div>
   );
 }
+
+// Super Large, Modern, Rotating AI Assistant Icon (cbfd33 theme)
+const AIAssistantIcon = () => (
+  <div className="relative group">
+    <div className="relative w-16 h-16 flex items-center justify-center">
+      <svg
+        viewBox="0 0 64 64"
+        fill="none"
+        className="w-16 h-16 animate-spin-slow drop-shadow-2xl group-hover:scale-110 transition-transform duration-300"
+        style={{ color: "#cbfd33" }}
+      >
+        <g>
+          {/* Main starburst shape */}
+          <path
+            d="M32 8 L36 32 L56 32 L36 36 L32 56 L28 36 L8 32 L28 32 Z"
+            fill="currentColor"
+            opacity="0.98"
+          />
+          {/* Inner sparkle */}
+          <circle
+            cx="32"
+            cy="32"
+            r="9"
+            fill="white"
+            opacity="0.85"
+          />
+        </g>
+      </svg>
+      {/* Strong glowing effect */}
+      <div className="absolute inset-0 rounded-full bg-[#cbfd33] opacity-50 blur-2xl pointer-events-none" />
+    </div>
+  </div>
+);
+
+// CSS (add to your global styles or Tailwind config):
+// @keyframes spin-slow { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+// .animate-spin-slow { animation: spin-slow 2.5s linear infinite; }
 
 export default function Dashboard({ children }: DashboardProps) {
   const router = useRouter();
@@ -94,12 +132,16 @@ export default function Dashboard({ children }: DashboardProps) {
     router.push("/chat");
   };
 
+  const handleAIChatClick = () => {
+    router.push("/ai-chat");
+  };
+
   const handleNavigation = (path: string) => {
     router.push(path);
   };
 
   // Only render bottom nav if not on /chat
-  const showBottomNav = pathname !== '/chat';
+  const showBottomNav = pathname !== '/chat' && pathname !== '/ai-chat';
 
   // If we're at the root dashboard, show ExploreFeed
   if (pathname === '/dashboard') {
@@ -115,7 +157,7 @@ export default function Dashboard({ children }: DashboardProps) {
                 className="h-8 w-auto"
               />
             </div>
-            {/* Right side: Chat and Notifications */}
+            {/* Right side: Chat, AI Assistant, and Notifications */}
             <div className="flex items-center gap-2">
               <Button
                 onClick={handleChatClick}
@@ -130,6 +172,7 @@ export default function Dashboard({ children }: DashboardProps) {
                   </Badge>
                 )}
               </Button>
+              {/* Removed AI Assistant Icon from top navbar */}
               <Button
                 onClick={handleNotificationsClick}
                 variant="ghost"
@@ -154,27 +197,31 @@ export default function Dashboard({ children }: DashboardProps) {
 
         {/* Bottom Navigation */}
         {showBottomNav && (
-          <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-[#CAFE33]/20">
-            <div className="grid grid-cols-3 w-full h-16 bg-transparent p-0">
+          <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-[#CAFE33]/20 z-50">
+            <div className="grid grid-cols-4 w-full h-20 bg-transparent p-0">
               <button 
                 onClick={() => handleNavigation('/explore')}
-                className="flex flex-col items-center gap-1 py-2 text-xs text-[#CAFE33]"
+                className={`flex flex-col items-center gap-1 py-2 text-xs ${String(pathname) === '/explore' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
               >
-                <Home className="h-5 w-5" />
+                <Home className="h-6 w-6" />
                 <span>Home</span>
               </button>
+              <div className="flex flex-col items-center gap-1 py-2 text-xs -mt-6 cursor-pointer" onClick={handleAIChatClick}>
+                <AiButton />
+                <span className="text-[#cbfd33] font-semibold">Leo AI</span>
+              </div>
               <button 
                 onClick={() => handleNavigation('/swipe')}
-                className="flex flex-col items-center gap-1 py-2 text-xs text-gray-400"
+                className={`flex flex-col items-center gap-1 py-2 text-xs ${String(pathname) === '/swipe' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
               >
-                <RefreshCcw className="h-5 w-5" />
+                <RefreshCcw className="h-6 w-6" />
                 <span>Swipe</span>
               </button>
               <button 
                 onClick={() => handleNavigation('/profile')}
-                className="flex flex-col items-center gap-1 py-2 text-xs text-gray-400"
+                className={`flex flex-col items-center gap-1 py-2 text-xs ${String(pathname) === '/profile' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
               >
-                <User className="h-5 w-5" />
+                <User className="h-6 w-6" />
                 <span>Profile</span>
               </button>
             </div>
@@ -196,7 +243,7 @@ export default function Dashboard({ children }: DashboardProps) {
               className="h-8 w-auto"
             />
           </div>
-          {/* Right side: Chat and Notifications */}
+          {/* Right side: Chat, AI Assistant, and Notifications */}
           <div className="flex items-center gap-2">
             <Button
               onClick={handleChatClick}
@@ -211,6 +258,7 @@ export default function Dashboard({ children }: DashboardProps) {
                 </Badge>
               )}
             </Button>
+            {/* Removed AI Assistant Icon from top navbar */}
             <Button
               onClick={handleNotificationsClick}
               variant="ghost"
@@ -235,27 +283,31 @@ export default function Dashboard({ children }: DashboardProps) {
 
       {/* Bottom Navigation */}
       {showBottomNav && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-[#CAFE33]/20">
-          <div className="grid grid-cols-3 w-full h-16 bg-transparent p-0">
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-[#CAFE33]/20 z-50">
+          <div className="grid grid-cols-4 w-full h-20 bg-transparent p-0">
             <button 
               onClick={() => handleNavigation('/explore')}
-              className={`flex flex-col items-center gap-1 py-2 text-xs ${pathname === '/explore' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1 py-2 text-xs ${String(pathname) === '/explore' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
             >
-              <Home className="h-5 w-5" />
+              <Home className="h-6 w-6" />
               <span>Home</span>
             </button>
+            <div className="flex flex-col items-center gap-1 py-2 text-xs -mt-6 cursor-pointer" onClick={handleAIChatClick}>
+              <AiButton />
+              <span className="text-[#cbfd33] font-semibold">AI</span>
+            </div>
             <button 
               onClick={() => handleNavigation('/swipe')}
-              className={`flex flex-col items-center gap-1 py-2 text-xs ${pathname === '/swipe' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1 py-2 text-xs ${String(pathname) === '/swipe' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
             >
-              <RefreshCcw className="h-5 w-5" />
+              <RefreshCcw className="h-6 w-6" />
               <span>Swipe</span>
             </button>
             <button 
               onClick={() => handleNavigation('/profile')}
-              className={`flex flex-col items-center gap-1 py-2 text-xs ${pathname === '/profile' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1 py-2 text-xs ${String(pathname) === '/profile' ? 'text-[#CAFE33]' : 'text-gray-400'}`}
             >
-              <User className="h-5 w-5" />
+              <User className="h-6 w-6" />
               <span>Profile</span>
             </button>
           </div>

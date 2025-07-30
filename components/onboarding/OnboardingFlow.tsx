@@ -5,8 +5,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEmbeddings } from "@/hooks/useEmbeddings";
+import { analyzeFavorites } from "@/lib/analyze-favorites";
 import BasicInfoStep from "./steps/BasicInfoStep";
 import InterestsStep from "./steps/InterestsStep";
+import FavoritesStep from "./steps/FavoritesStep";
 import ExpandedSkillsStep from "./steps/ExpandedSkillsStep";
 import AboutStep from "./steps/AboutStep";
 import AchievementsStep from "./steps/AchievementsStep";
@@ -64,9 +66,17 @@ interface Skills {
   other: string[];
 }
 
+interface Favorites {
+  books: string[];
+  movies: string[];
+  podcasts: string[];
+  brands: string[];
+}
+
 interface FormData {
   basicInfo: BasicInfo;
   interests: string[];
+  favorites: Favorites;
   skills: Skills;
   about: string;
   achievements: any[];
@@ -87,6 +97,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const [formData, setFormData] = useState<FormData>({
     basicInfo: {},
     interests: [],
+    favorites: { books: [], movies: [], podcasts: [], brands: [] },
     skills: { tech: [], creative: [], sports: [], leadership: [], other: [] },
     about: "",
     achievements: [],
@@ -111,6 +122,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const steps = [
     { component: BasicInfoStep, title: "Basic Info 👤", emoji: "👤" },
     { component: InterestsStep, title: "Interests 🎯", emoji: "🎯" },
+    { component: FavoritesStep, title: "Your Favorites ⭐", emoji: "⭐" },
     { component: ExpandedSkillsStep, title: "Skills & Talents 💪", emoji: "💪" },
     { component: AboutStep, title: "About You 📝", emoji: "📝" },
     { component: AchievementsStep, title: "Achievements & Work 🏆", emoji: "🏆" },
@@ -203,6 +215,11 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         setAvatarStatus('');
       }
 
+      // --- NEW: Analyze favorites to determine interests ---
+      console.log('Analyzing favorites to determine interests...');
+      const analyzedInterests = analyzeFavorites(formData.favorites);
+      console.log('Analyzed interests:', analyzedInterests);
+
       // Prepare user data for database
       const userData = {
         id: user.id,
@@ -227,6 +244,18 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         sports_skills: formData.skills.sports || [],
         leadership_skills: formData.skills.leadership || [],
         other_skills: formData.skills.other || [],
+        
+        // Favorites data
+        favorite_books: formData.favorites.books || [],
+        favorite_movies: formData.favorites.movies || [],
+        favorite_podcasts: formData.favorites.podcasts || [],
+        favorite_brands: formData.favorites.brands || [],
+        
+        // --- NEW: Auto-detected interests based on favorites ---
+        book_interests: analyzedInterests.book_interests,
+        movie_interests: analyzedInterests.movie_interests,
+        podcast_interests: analyzedInterests.podcast_interests,
+        tv_show_interests: analyzedInterests.tv_show_interests,
         
         // Social Links
         github: formData.socialLinks.github || null,
@@ -258,6 +287,8 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         body: JSON.stringify({
           basicInfo: formData.basicInfo,
           interests: formData.interests,
+          favorites: formData.favorites,
+          analyzedInterests: analyzedInterests, // Include analyzed interests
           skills: formData.skills,
           about: formData.about,
           achievements: formData.achievements,
@@ -299,7 +330,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
 
       toast({
         title: "Profile Saved!",
-        description: "Your Fyndly profile is now live.",
+        description: "Your Fyndly profile is now live with personalized recommendations.",
         variant: "default"
       });
 

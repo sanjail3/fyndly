@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import MatchedUsersStory from "./explore/MatchedUsersStory";
 import IntentHighlightsSection from "./explore/IntentHighlightsSection";
 import RecommendationsSection from "./explore/RecommendationsSection";
+import TasteAnalysisPromo from "./explore/TasteAnalysisPromo";
+import TasteAnalysisFloatingButton from "./explore/TasteAnalysisFloatingButton";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -314,6 +316,11 @@ const ExploreFeed = () => {
         />
       )}
 
+      {/* Taste Analysis Promotion - only show when not filtered */}
+      {!isFiltered && (
+        <TasteAnalysisPromo />
+      )}
+
       {/* Content Sections */}
       {isFiltered ? (
         filteredResults.length > 0 ? (
@@ -409,6 +416,8 @@ const ExploreFeed = () => {
         </div>
       )}
 
+   
+
       {/* Profile Modal */}
       {selectedUser && (
         <ProfileFullModal
@@ -426,6 +435,9 @@ const ExploreFeed = () => {
           currentUserId={currentUserId}
         />
       )}
+
+      {/* Floating Taste Analysis Button */}
+      <TasteAnalysisFloatingButton />
     </div>
   );
 };

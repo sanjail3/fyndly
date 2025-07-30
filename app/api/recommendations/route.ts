@@ -67,6 +67,15 @@ const GENRE_MAPPINGS: any = {
   }
 };
 
+// Fallback genres for each domain when user interests don't match
+const FALLBACK_GENRES = {
+  books: ["fiction", "non-fiction", "mystery", "romance", "biography"],
+  movies: ["drama", "comedy", "action", "thriller", "romance"],
+  podcasts: ["news", "comedy", "technology", "business", "true-crime"],
+  tv_shows: ["drama", "comedy", "action", "thriller", "sci-fi"],
+  brands: ["technology", "lifestyle", "fashion", "food", "entertainment"]
+};
+
 interface Recommendation {
   entity_id: string;
   entity_type: string;
@@ -174,44 +183,12 @@ function parseQlooResponse(response: any, entityType: string): Recommendation[] 
   });
 }
 
-function calculateRelevanceScore(user: UserWithRecommendations, recommendation: Recommendation): number {
-  let score = 0.4; // Base score
-
-  // Genre matching boost
-  const userAllGenres = [
-    ...(user.book_interests || []),
-    ...(user.movie_interests || []),
-    ...(user.podcast_interests || []),
-    ...(user.tv_show_interests || []),
-    ...(user.brand_interests || [])
-  ];
-
-  const genreMatches = userAllGenres.filter(genre => 
-    recommendation.tags.some(tag => tag.toLowerCase().includes(genre.toLowerCase()))
-  );
-  score += genreMatches.length * 0.2;
-
-  // Popularity factor
-  score += recommendation.popularity * 0.25;
-
-  // External ratings boost
-  if (recommendation.external_ratings) {
-    let ratingBoost = 0;
-    if (recommendation.external_ratings.imdb_rating) {
-      ratingBoost += (recommendation.external_ratings.imdb_rating / 10) * 0.1;
-    }
-    if (recommendation.external_ratings.goodreads_rating) {
-      ratingBoost += (recommendation.external_ratings.goodreads_rating / 5) * 0.1;
-    }
-    score += ratingBoost;
-  }
-
-  return Math.min(1.0, score);
-}
-
 async function getUserBasedRecommendations(user: UserWithRecommendations, targetDomains: string[] = ["books", "movies", "podcasts"]): Promise<Recommendation[]> {
   const allRecommendations: Recommendation[] = [];
-
+  
+  // Add randomization seed based on current time to get different results
+  const randomSeed = Date.now();
+  
   for (const domain of targetDomains) {
     if (!ENTITY_TYPES[domain as keyof typeof ENTITY_TYPES]) continue;
 
@@ -228,43 +205,192 @@ async function getUserBasedRecommendations(user: UserWithRecommendations, target
       userGenres = user.brand_interests || [];
     }
     
-    for (const genre of userGenres) {
+    // Filter genres that have mappings in Qloo API
+    const validGenres = userGenres.filter(genre => GENRE_MAPPINGS[domain]?.[genre]);
+    
+    // If no valid genres found, use fallback genres
+    if (validGenres.length === 0) {
+      console.log(`No valid genres found for ${domain}, using fallback genres`);
+      validGenres.push(...FALLBACK_GENRES[domain as keyof typeof FALLBACK_GENRES]);
+    }
+    
+    // Shuffle genres to get different results each time
+    const shuffledGenres = [...validGenres].sort(() => Math.random() - 0.5);
+    
+    // Take only a subset of genres for more varied results
+    const selectedGenres = shuffledGenres.slice(0, Math.min(3, shuffledGenres.length));
+    
+    for (const genre of selectedGenres) {
       const genreTag = GENRE_MAPPINGS[domain]?.[genre];
-      if (!genreTag) continue;
+      if (!genreTag) {
+        console.log(`No mapping found for genre: ${genre} in domain: ${domain}`);
+        continue;
+      }
 
+      // Add randomization to API parameters
+      const randomOffset = Math.floor(Math.random() * 10); // Random starting point
       const params = {
         "filter.type": ENTITY_TYPES[domain as keyof typeof ENTITY_TYPES],
         "signalInterestsTags": genreTag,
         "signal.demographics.age": user.age_group || "25_to_29",
         "signal.demographics.gender": user.gender === "other" ? "male" : (user.gender || "male"),
-        "filter.release_year.min": "22",
-        "take": "5"
+        "filter.release_year.min": "15", // More flexible date range
+        "take": "8", // Get more results
+        "skip": randomOffset.toString() // Add randomization
       };
 
+      console.log(`Fetching recommendations for ${domain} genre: ${genre} with tag: ${genreTag}`);
       const response = await makeQlooApiRequest(params);
       const recommendations = parseQlooResponse(response, domain);
 
       for (const rec of recommendations) {
         rec.relevance_score = calculateRelevanceScore(user, rec);
-        rec.explanation = `Recommended because you like ${genre} ${domain}`;
+        
+        // Different explanation based on whether it's user's interest or fallback
+        if (userGenres.includes(genre)) {
+          rec.explanation = `Recommended because you like ${genre} ${domain}`;
+        } else {
+          rec.explanation = `Popular ${genre} ${domain} you might enjoy`;
+        }
+        
+        // Add small random factor to relevance score to vary ordering
+        rec.relevance_score += (Math.random() - 0.5) * 0.1;
       }
 
       allRecommendations.push(...recommendations);
     }
+    
+    // Safety net: if still no recommendations for this domain, try one more fallback call
+    const domainRecommendations = allRecommendations.filter(rec => rec.entity_type === domain);
+    if (domainRecommendations.length === 0) {
+      console.log(`No recommendations found for ${domain}, trying emergency fallback`);
+      
+      const emergencyGenre = FALLBACK_GENRES[domain as keyof typeof FALLBACK_GENRES][0];
+      const emergencyGenreTag = GENRE_MAPPINGS[domain]?.[emergencyGenre];
+      
+      if (emergencyGenreTag) {
+        const emergencyParams = {
+          "filter.type": ENTITY_TYPES[domain as keyof typeof ENTITY_TYPES],
+          "signalInterestsTags": emergencyGenreTag,
+          "signal.demographics.age": "25_to_29",
+          "signal.demographics.gender": "male",
+          "take": "5"
+        };
+        
+        const emergencyResponse = await makeQlooApiRequest(emergencyParams);
+        const emergencyRecommendations = parseQlooResponse(emergencyResponse, domain);
+        
+        for (const rec of emergencyRecommendations) {
+          rec.relevance_score = 0.5; // Medium relevance for fallback
+          rec.explanation = `Popular ${emergencyGenre} ${domain} you might discover`;
+        }
+        
+        allRecommendations.push(...emergencyRecommendations);
+      }
+    }
   }
 
-  // Sort by relevance score and remove duplicates
+  // Enhanced deduplication and sorting
   const seenTitles = new Set();
+  const seenEntityIds = new Set();
   const uniqueRecommendations: Recommendation[] = [];
   
-  for (const rec of allRecommendations.sort((a, b) => b.relevance_score - a.relevance_score)) {
-    if (!seenTitles.has(rec.title)) {
-      seenTitles.add(rec.title);
+  // Sort by relevance score with randomization factor
+  const sortedRecommendations = allRecommendations.sort((a, b) => {
+    const scoreDiff = b.relevance_score - a.relevance_score;
+    // If scores are very close, add some randomization
+    if (Math.abs(scoreDiff) < 0.05) {
+      return Math.random() - 0.5;
+    }
+    return scoreDiff;
+  });
+  
+  for (const rec of sortedRecommendations) {
+    const titleKey = rec.title.toLowerCase().trim();
+    const entityKey = rec.entity_id;
+    
+    if (!seenTitles.has(titleKey) && !seenEntityIds.has(entityKey)) {
+      seenTitles.add(titleKey);
+      seenEntityIds.add(entityKey);
       uniqueRecommendations.push(rec);
     }
   }
 
-  return uniqueRecommendations.slice(0, 10);
+  // Return a randomized subset to ensure variety
+  const shuffledResults = uniqueRecommendations.sort(() => Math.random() - 0.5);
+  return shuffledResults.slice(0, 15); // Return more results for better filtering
+}
+
+function calculateRelevanceScore(user: UserWithRecommendations, recommendation: Recommendation): number {
+  let score = 0.3; // Lower base score to allow more variation
+
+  // Enhanced genre matching with exact domain targeting
+  let userGenres: string[] = [];
+  
+  switch (recommendation.entity_type) {
+    case 'books':
+      userGenres = user.book_interests || [];
+      break;
+    case 'movies':
+      userGenres = user.movie_interests || [];
+      break;
+    case 'podcasts':
+      userGenres = user.podcast_interests || [];
+      break;
+    case 'tv_shows':
+      userGenres = user.tv_show_interests || [];
+      break;
+    case 'brands':
+      userGenres = user.brand_interests || [];
+      break;
+  }
+
+  // Exact genre matching (higher weight)
+  const exactGenreMatches = userGenres.filter(genre => 
+    recommendation.tags.some(tag => 
+      tag.toLowerCase() === genre.toLowerCase() ||
+      tag.toLowerCase().includes(genre.toLowerCase()) ||
+      genre.toLowerCase().includes(tag.toLowerCase())
+    )
+  );
+  score += exactGenreMatches.length * 0.3;
+
+  // Fuzzy genre matching (lower weight)
+  const fuzzyGenreMatches = userGenres.filter(genre => 
+    recommendation.tags.some(tag => {
+      const tagWords = tag.toLowerCase().split(/\s+/);
+      const genreWords = genre.toLowerCase().split(/\s+/);
+      return tagWords.some(tagWord => genreWords.some(genreWord => 
+        tagWord.includes(genreWord) || genreWord.includes(tagWord)
+      ));
+    })
+  );
+  score += fuzzyGenreMatches.length * 0.15;
+
+  // Popularity factor (normalized)
+  score += Math.min(recommendation.popularity * 0.2, 0.2);
+
+  // External ratings boost
+  if (recommendation.external_ratings) {
+    let ratingBoost = 0;
+    if (recommendation.external_ratings.imdb_rating && recommendation.external_ratings.imdb_rating > 7) {
+      ratingBoost += 0.1;
+    }
+    if (recommendation.external_ratings.goodreads_rating && recommendation.external_ratings.goodreads_rating > 4) {
+      ratingBoost += 0.1;
+    }
+    if (recommendation.external_ratings.itunes_rating && recommendation.external_ratings.itunes_rating > 4) {
+      ratingBoost += 0.1;
+    }
+    score += ratingBoost;
+  }
+
+  // Content length/description quality boost
+  if (recommendation.description && recommendation.description.length > 100) {
+    score += 0.05;
+  }
+
+  return Math.min(1.0, Math.max(0.1, score)); // Ensure score is between 0.1 and 1.0
 }
 
 async function getFriendBasedRecommendations(user: UserWithRecommendations, targetDomains: string[] = ["books", "movies", "podcasts"]): Promise<Recommendation[]> {
@@ -274,12 +400,17 @@ async function getFriendBasedRecommendations(user: UserWithRecommendations, targ
     where: {
       // For now, just get some random users as "friends"
       // In production, you'd query actual friend relationships
+      NOT: {
+        id: user.id // Exclude the current user
+      }
     },
     take: 5
   });
 
   if (friends.length === 0) {
-    return [];
+    // If no friends, fall back to user-based recommendations with fallback genres
+    console.log("No friends found, using fallback genres for friend-based recommendations");
+    return await getUserBasedRecommendations(user, targetDomains);
   }
 
   // Aggregate friends' interests
@@ -299,19 +430,39 @@ async function getFriendBasedRecommendations(user: UserWithRecommendations, targ
 
     const userGenres = new Set(user[`${domain}_interests` as keyof UserWithRecommendations] as string[] || []);
     const friendGenres = new Set(friendsGenres[domain] || []);
-    const uniqueFriendGenres = [...friendGenres].filter(genre => !userGenres.has(genre));
+    let uniqueFriendGenres = [...friendGenres].filter(genre => !userGenres.has(genre));
+    
+    // Filter for valid genres that have Qloo API mappings
+    uniqueFriendGenres = uniqueFriendGenres.filter(genre => GENRE_MAPPINGS[domain]?.[genre]);
+    
+    // If no valid friend genres, use fallback genres
+    if (uniqueFriendGenres.length === 0) {
+      console.log(`No valid friend genres found for ${domain}, using fallback genres`);
+      uniqueFriendGenres = FALLBACK_GENRES[domain as keyof typeof FALLBACK_GENRES].filter(genre => !userGenres.has(genre));
+      
+      // If still empty (user has all fallback genres), use all fallback genres
+      if (uniqueFriendGenres.length === 0) {
+        uniqueFriendGenres = FALLBACK_GENRES[domain as keyof typeof FALLBACK_GENRES];
+      }
+    }
 
-    for (const genre of uniqueFriendGenres) {
+    // Randomize and limit the genres
+    const shuffledGenres = uniqueFriendGenres.sort(() => Math.random() - 0.5);
+    const selectedGenres = shuffledGenres.slice(0, Math.min(3, shuffledGenres.length));
+
+    for (const genre of selectedGenres) {
       const genreTag = GENRE_MAPPINGS[domain]?.[genre];
       if (!genreTag) continue;
 
+      const randomOffset = Math.floor(Math.random() * 5);
       const params = {
         "filter.type": ENTITY_TYPES[domain as keyof typeof ENTITY_TYPES],
         "signalInterestsTags": genreTag,
         "signal.demographics.age": user.age_group || "25_to_29",
         "signal.demographics.gender": user.gender || "male",
-        "filter.release_year.min": "22",
-        "take": "3"
+        "filter.release_year.min": "15",
+        "take": "6",
+        "skip": randomOffset.toString()
       };
 
       const response = await makeQlooApiRequest(params);
@@ -319,10 +470,49 @@ async function getFriendBasedRecommendations(user: UserWithRecommendations, targ
 
       for (const rec of recommendations) {
         rec.relevance_score = calculateRelevanceScore(user, rec) * 0.8; // Friend-based discount
-        rec.explanation = `Recommended because your friends like ${genre} ${domain}`;
+        
+        // Check if this was from friends' actual interests or fallback
+        const wasFriendGenre = friendGenres.has(genre);
+        if (wasFriendGenre) {
+          rec.explanation = `Recommended because your friends like ${genre} ${domain}`;
+        } else {
+          rec.explanation = `Popular ${genre} ${domain} others enjoy`;
+        }
+        
+        // Add randomization factor
+        rec.relevance_score += (Math.random() - 0.5) * 0.1;
       }
 
       allRecommendations.push(...recommendations);
+    }
+    
+    // Safety net for friend-based recommendations too
+    const domainRecommendations = allRecommendations.filter(rec => rec.entity_type === domain);
+    if (domainRecommendations.length === 0) {
+      console.log(`No friend-based recommendations found for ${domain}, trying emergency fallback`);
+      
+      const emergencyGenre = FALLBACK_GENRES[domain as keyof typeof FALLBACK_GENRES][0];
+      const emergencyGenreTag = GENRE_MAPPINGS[domain]?.[emergencyGenre];
+      
+      if (emergencyGenreTag) {
+        const emergencyParams = {
+          "filter.type": ENTITY_TYPES[domain as keyof typeof ENTITY_TYPES],
+          "signalInterestsTags": emergencyGenreTag,
+          "signal.demographics.age": "25_to_29",
+          "signal.demographics.gender": "male",
+          "take": "4"
+        };
+        
+        const emergencyResponse = await makeQlooApiRequest(emergencyParams);
+        const emergencyRecommendations = parseQlooResponse(emergencyResponse, domain);
+        
+        for (const rec of emergencyRecommendations) {
+          rec.relevance_score = 0.4; // Lower relevance for friend-based fallback
+          rec.explanation = `Trending ${emergencyGenre} ${domain} to explore`;
+        }
+        
+        allRecommendations.push(...emergencyRecommendations);
+      }
     }
   }
 

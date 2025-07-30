@@ -21,11 +21,6 @@ interface RecommendationsResponse {
   success: boolean;
   type: string;
   domains: string[];
-  user: {
-    id: string;
-    full_name: string;
-    interests: any;
-  };
   recommendations: Recommendation[];
   total: number;
 }
@@ -40,44 +35,83 @@ const DOMAIN_OPTIONS = [
 ];
 
 const RecommendationsSection = () => {
-  const [recommendations, setRecommendations] = useState<RecommendationsResponse | null>(null);
+  const [allRecommendations, setAllRecommendations] = useState<Recommendation[]>([]);
+  const [currentType, setCurrentType] = useState("user_based");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeDomain, setActiveDomain] = useState("all");
 
-  const fetchRecommendations = async (domains: string[] = ["books", "movies", "podcasts"]) => {
+  const fetchAllRecommendations = async (type: string = "user_based") => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(`/api/recommendations/test?type=user_based&domains=${domains.join(",")}&limit=10`);
-      if (response.ok) {
-        const data = await response.json();
-        setRecommendations(data);
+      // Fetch recommendations for all domains at once
+      const params = new URLSearchParams({
+        type: type,
+        domains: "books,movies,podcasts,tv_shows,brands",
+        limit: "50" // Fetch more to have good variety across all domains
+      });
+
+      const response = await fetch(`/api/recommendations?${params}`);
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to see personalized recommendations');
+        } else if (response.status === 404) {
+          throw new Error('User profile not found. Please complete your onboarding.');
+        } else {
+          throw new Error(`Failed to fetch recommendations: ${response.status}`);
+        }
       }
-    } catch (error) {
+
+      const data = await response.json();
+      console.log('All recommendations fetched:', data);
+      setAllRecommendations(data.recommendations || []);
+      setCurrentType(type);
+    } catch (error: any) {
       console.error("Error fetching recommendations:", error);
+      setError(error.message || "Failed to load recommendations");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRecommendations();
+    fetchAllRecommendations();
   }, []);
 
-  // Handle domain filter change
+  // Handle domain filter change (no API call, just local filtering)
   const handleDomainChange = (domain: string) => {
     setActiveDomain(domain);
-    if (domain === "all") {
-      fetchRecommendations();
-    } else {
-      fetchRecommendations([domain]);
+  };
+
+  // Handle recommendation type change (only API call when type changes)
+  const handleTypeChange = (type: string) => {
+    if (type !== currentType) {
+      fetchAllRecommendations(type);
     }
   };
 
-  // Filter recommendations by domain
+  // Filter recommendations by domain locally
   const getDomainRecommendations = (domain: string) => {
-    if (!recommendations?.recommendations) return [];
-    if (domain === "all") return recommendations.recommendations.slice(0, 6);
-    return recommendations.recommendations.filter(rec => rec.entity_type === domain).slice(0, 6);
+    if (!allRecommendations || allRecommendations.length === 0) return [];
+    
+    let filteredRecommendations = allRecommendations;
+    
+    if (domain !== "all") {
+      filteredRecommendations = allRecommendations.filter(rec => rec.entity_type === domain);
+    }
+    
+    // Sort by relevance score and limit results
+    return filteredRecommendations
+      .sort((a, b) => b.relevance_score - a.relevance_score)
+      .slice(0, domain === "all" ? 8 : 6);
+  };
+
+  // Get count for each domain to show in badges
+  const getDomainCount = (domain: string) => {
+    if (domain === "all") return allRecommendations.length;
+    return allRecommendations.filter(rec => rec.entity_type === domain).length;
   };
 
   // --- THEME STYLES ---
@@ -93,12 +127,37 @@ const RecommendationsSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Star className="h-5 w-5 text-[#CAFE32]" />
-            Cross-Domain Recommendations
+            Personalized Recommendations
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#CAFE32]"></div>
+            <p className="ml-3 text-[#CAFE32]">Loading your personalized recommendations...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className={`w-full ${bgClass} border border-red-500/30`}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Star className="h-5 w-5 text-[#CAFE32]" />
+            Personalized Recommendations
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-red-400 mb-4">{error}</p>
+            <Button 
+              onClick={() => fetchAllRecommendations()}
+              className="bg-[#CAFE32] text-black hover:bg-[#CAFE32]/80"
+            >
+              Try Again
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -110,19 +169,44 @@ const RecommendationsSection = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-white">
           <Star className="h-5 w-5 text-[#CAFE32]" />
-          Cross-Domain Recommendations
+          Personalized Recommendations
         </CardTitle>
-        {recommendations?.user && (
-          <p className="text-sm text-[#CAFE32] font-medium">
-            Personalized for {recommendations.user.full_name}
-          </p>
-        )}
+        <div className="flex flex-col gap-2">
+          {/* Recommendation Type Toggle */}
+          <div className="flex gap-2">
+            <button
+              className={`px-3 py-1 rounded-full text-xs transition-all duration-150 ${
+                currentType === 'user_based' ? chipActive : chipInactive
+              }`}
+              onClick={() => handleTypeChange('user_based')}
+            >
+              Based on Your Interests
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full text-xs transition-all duration-150 ${
+                currentType === 'friend_based' ? chipActive : chipInactive
+              }`}
+              onClick={() => handleTypeChange('friend_based')}
+            >
+              Based on Friends
+            </button>
+            <button
+              className={`px-3 py-1 rounded-full text-xs transition-all duration-150 ${
+                currentType === 'all' ? chipActive : chipInactive
+              }`}
+              onClick={() => handleTypeChange('all')}
+            >
+              All Sources
+            </button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        {/* Filter Chips Bar */}
+        {/* Filter Chips Bar with counts */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
           {DOMAIN_OPTIONS.map(opt => {
             const Icon = opt.icon;
+            const count = getDomainCount(opt.key);
             return (
               <button
                 key={opt.key}
@@ -134,6 +218,13 @@ const RecommendationsSection = () => {
               >
                 <Icon className="h-4 w-4" />
                 {opt.label}
+                {count > 0 && (
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                    activeDomain === opt.key ? 'bg-black/20 text-black' : 'bg-[#CAFE32]/20 text-[#CAFE32]'
+                  }`}>
+                    {count}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -143,11 +234,12 @@ const RecommendationsSection = () => {
         <div className="flex flex-col gap-4">
           {getDomainRecommendations(activeDomain).length === 0 && (
             <div className="text-center py-8 text-[#CAFE32]/70">
-              No recommendations available. Try updating your interests!
+              <p className="mb-2">No recommendations available for this category.</p>
+              <p className="text-sm">Try updating your interests in your profile or complete the onboarding flow!</p>
             </div>
           )}
           {getDomainRecommendations(activeDomain).map((rec) => (
-            <RecommendationCard key={rec.entity_id} recommendation={rec} />
+            <RecommendationCard key={`${rec.entity_id}-${rec.entity_type}`} recommendation={rec} />
           ))}
         </div>
       </CardContent>
@@ -218,7 +310,7 @@ const RecommendationCard = ({ recommendation }: { recommendation: Recommendation
               {formatRating(recommendation.external_ratings)}
             </span>
           )}
-          <Button size="sm" variant="outline" className="border-[#CAFE32] text-[#CAFE32] hover:bg-[#CAFE32]/20">
+          <Button size="sm" className="bg-[#CAFE32] text-black hover:bg-[#CAFE32]/80">
             <ExternalLink className="h-3 w-3 mr-1" />
             View
           </Button>
