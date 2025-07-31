@@ -13,9 +13,15 @@ import {
   Star,
   CheckCircle,
   Menu,
-  X
+  X,
+  BookOpen,
+  Film,
+  Headphones,
+  Tv,
+  Brain,
+  Wand2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -63,48 +69,68 @@ function LoadingIcon({ size = 64, message }: { size?: number; message?: string }
 
 const LandingPage = ({ onGetStarted }: LandingPageProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const features = [
     {
       icon: <Target className="h-8 w-8 text-[#CAFE33]" />,
-      title: "Smart Matching",
-      description: "AI-powered recommendations based on your interests, skills, and goals"
+      emoji: "🎯",
+      title: "AI-Powered Recommendations",
+      description: "Get personalized suggestions for books, movies, podcasts, and TV shows that match your taste"
     },
     {
-      icon: <Zap className="h-8 w-8 text-[#CAFE33]" />,
-      title: "Swipe to Connect",
-      description: "Tinder-style discovery to find your perfect collaboration partner"
+      icon: <Brain className="h-8 w-8 text-[#CAFE33]" />,
+      emoji: "🧠",
+      title: "Taste Analysis",
+      description: "Discover your unique content DNA with our AI-powered taste analysis and visualization"
     },
     {
-      icon: <MessageSquare className="h-8 w-8 text-[#CAFE33]" />,
-      title: "Interest Rooms",
-      description: "Join community discussions around hackathons, startups, and study groups"
+      icon: <Wand2 className="h-8 w-8 text-[#CAFE33]" />,
+      emoji: "✨",
+      title: "Smart AI Assistant",
+      description: "Your personal AI guide to discover content and connect with like-minded people"
     },
     {
       icon: <Users className="h-8 w-8 text-[#CAFE33]" />,
-      title: "Campus Community",
-      description: "Connect with like-minded students from your university"
+      emoji: "👥",
+      title: "Social Discovery",
+      description: "Connect with people who share your interests in books, movies, and more"
     }
   ];
 
+  const contentTypes = [
+    { icon: <BookOpen className="h-6 w-6" />, label: "Books", emoji: "📚" },
+    { icon: <Film className="h-6 w-6" />, label: "Movies", emoji: "🎬" },
+    { icon: <Headphones className="h-6 w-6" />, label: "Podcasts", emoji: "🎧" },
+    { icon: <Tv className="h-6 w-6" />, label: "TV Shows", emoji: "📺" }
+  ];
+
   const stats = [
-    { number: "10K+", label: "Active Students" },
-    { number: "500+", label: "Successful Matches" },
-    { number: "50+", label: "Universities" },
-    { number: "100+", label: "Hackathon Teams" }
+    { number: "50K+", label: "Content Recommendations" },
+    { number: "1000+", label: "Active Users" },
+    { number: "100+", label: "Interest Categories" },
+    { number: "4.9★", label: "User Rating" }
   ];
 
   const testimonials = [
     {
       name: "Sarah Chen",
-      role: "CS Student, Stanford",
-      text: "Found my co-founder through Fyndly! We built an AI startup that raised $2M seed funding.",
+      role: "Book Enthusiast",
+      text: "Fyndly's AI recommendations are spot-on! Found amazing books and podcasts I never would have discovered otherwise.",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face"
     },
     {
       name: "Mike Rodriguez",
-      role: "Business Student, MIT",
-      text: "The perfect platform to find hackathon teammates. Won 3 hackathons this year!",
+      role: "Movie Buff",
+      text: "The taste analysis feature is mind-blowing! It's like having a personal content curator who really gets me.",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face"
     }
   ];
@@ -116,8 +142,10 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      {/* Modern Scrollable Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-black/90 backdrop-blur-xl border-b border-gray-800/50">
+      {/* Modern Scrollable Navbar with Glassmorphism */}
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        scrolled ? "bg-black/90 backdrop-blur-xl" : "bg-transparent"
+      } border-b border-gray-800/50`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -195,139 +223,250 @@ const LandingPage = ({ onGetStarted }: LandingPageProps) => {
         </div>
       </nav>
 
-      {/* Hero Section - Updated with Emojis and Animations */}
+      {/* Animated Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_#CAFE33_0%,_transparent_25%)] opacity-10 animate-pulse"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,_purple_0%,_transparent_25%)] opacity-10 animate-pulse delay-1000"></div>
+      </div>
+
+      {/* Hero Section with Floating Elements */}
       <div className="relative pt-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#CAFE33]/20 via-transparent to-purple-500/20"></div>
         
-        {/* Floating Emojis */}
-        <div className="absolute top-1/4 left-0 -translate-x-1/4 opacity-50 animate-float hidden lg:block" style={{ animationDelay: '0s' }}>
-          <span className="text-9xl" role="img" aria-label="Sparkles Emoji">✨</span>
-        </div>
-        <div className="absolute top-1/3 right-0 translate-x-1/4 opacity-50 animate-float-reverse hidden lg:block" style={{ animationDelay: '1s' }}>
-          <span className="text-9xl" role="img" aria-label="Rocket Emoji">🚀</span>
+        {/* Floating Icons */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {contentTypes.map((type, index) => (
+            <div
+              key={type.label}
+              className="absolute animate-float"
+              style={{
+                top: `${20 + index * 25}%`,
+                left: `${10 + index * 20}%`,
+                animationDelay: `${index * 0.5}s`,
+                transform: `scale(${0.8 + index * 0.2})`
+              }}
+            >
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-[#CAFE33]/20 to-purple-500/20 backdrop-blur-sm border border-[#CAFE33]/30">
+                <span className="text-2xl">{type.emoji}</span>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="relative px-4 py-20 sm:py-32 max-w-7xl mx-auto">
           <div className="text-center space-y-10">
-            {/* Main heading */}
+            {/* Main heading with animated gradient */}
             <div className="space-y-8">
               <Badge className="bg-gradient-to-r from-[#CAFE33]/20 to-purple-500/20 text-[#CAFE33] border-[#CAFE33]/30 px-4 py-2 text-base font-bold animate-bounce">
-                🌱 New! Join the next-gen campus community
+                ✨ Your Personal Content Discovery Platform 🎯
               </Badge>
               <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black leading-tight tracking-tight">
-                Find Your
-                <span className="block bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] bg-clip-text text-transparent">
-                  Campus Tribe
+                Discover What
+                <span className="block bg-gradient-to-r from-[#CAFE33] via-[#B8E62E] to-[#CAFE33] bg-clip-text text-transparent bg-size-200 animate-gradient">
+                  Interests You
                 </span>
-                <span className="block text-3xl sm:text-4xl text-[#CAFE33] mt-4 font-bold animate-pulse">Swipe. Match. Build. 🚀</span>
+                <span className="block text-3xl sm:text-4xl text-[#CAFE33] mt-4 font-bold animate-pulse">
+                  Content 📚 • People 👥 • Insights 🧠
+                </span>
               </h1>
               <p className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed font-light">
-                Meet creative minds, collaborate on projects, and make friends for life. <span className="text-[#CAFE33] font-semibold">No numbers. No hype. Just real connections.</span>
+                Your all-in-one platform for discovering amazing content and connecting with like-minded people. 
+                <span className="text-[#CAFE33] font-semibold"> Powered by AI ✨, personalized for you 🎯</span>
               </p>
             </div>
 
             {/* Modern CTA Buttons */}
-            <div className="flex justify-center items-center pt-8">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8">
               <Button
                 onClick={onGetStarted}
-                className="bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] text-black hover:from-[#B8E62E] hover:to-[#CAFE33] font-bold px-10 py-4 rounded-2xl text-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-[#CAFE33]/25 w-full sm:w-auto"
+                className="group relative bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] text-black hover:from-[#B8E62E] hover:to-[#CAFE33] font-bold px-8 py-4 rounded-xl text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#CAFE33]/25"
               >
-                Start Connecting Now <ArrowRight className="ml-2 h-5 w-5" />
+                Get Started Now
+                <ArrowRight className="ml-2 h-5 w-5 inline-block transition-transform group-hover:translate-x-1" />
+                <div className="absolute inset-0 rounded-xl bg-white/20 blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </Button>
+              <a
+                href="#features"
+                className="text-[#CAFE33] hover:text-[#B8E62E] font-semibold flex items-center gap-2 group transition-colors"
+              >
+                Learn More
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </a>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <div id="features" className="py-24 px-4 max-w-7xl mx-auto">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl sm:text-6xl font-black mb-6">
-            Why You'll <span className="bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] bg-clip-text text-transparent">Love Fyndly</span>
-          </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
-            Everything you need to find your perfect collaboration partner and build amazing projects together <span className="text-[#CAFE33]">✨</span>
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="bg-gradient-to-br from-gray-900/80 to-gray-800/50 border-gray-700 hover:border-[#CAFE33]/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#CAFE33]/10 group">
-              <CardContent className="p-6 text-center">
-                <div className="mb-4 flex justify-center group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Features Section with Hover Effects */}
+      <div className="py-24 px-4" id="features">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+              Discover the <span className="text-[#CAFE33]">Magic</span> ✨
+            </h2>
+            <p className="text-xl text-gray-300">Everything you need to explore your interests</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {features.map((feature, index) => (
+              <Card
+                key={feature.title}
+                className="group relative overflow-hidden border-0 bg-gradient-to-br from-gray-900 to-gray-800 hover:from-[#CAFE33]/10 hover:to-purple-500/10 transition-all duration-500"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-[#CAFE33]/0 to-purple-500/0 group-hover:from-[#CAFE33]/10 group-hover:to-purple-500/10 transition-all duration-500"></div>
+                <CardContent className="p-8 relative">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-[#CAFE33]/20 to-purple-500/20 backdrop-blur-sm">
+                      {feature.icon}
+                    </div>
+                    <span className="text-3xl">{feature.emoji}</span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 text-[#CAFE33] group-hover:text-[#B8E62E] transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-300 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* How it Works */}
-      <div id="how-it-works" className="py-24 px-4 bg-gradient-to-r from-gray-900/50 to-gray-800/30">
+      {/* Stats Section with Animated Counters */}
+      <div className="py-24 px-4 bg-gradient-to-r from-[#CAFE33]/5 via-purple-500/5 to-[#CAFE33]/5">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl sm:text-6xl font-black mb-6">
-              Simple. Fast. <span className="bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] bg-clip-text text-transparent">Effective.</span>
-            </h2>
-            <p className="text-xl text-gray-300 font-light">Get started in just 3 easy steps! 🚀</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              { step: "1", title: "Create Your Profile", desc: "Share your interests, skills, and what you're looking to build", emoji: "🎯" },
-              { step: "2", title: "Discover & Match", desc: "Swipe through curated recommendations and connect with your tribe", emoji: "✨" },
-              { step: "3", title: "Start Building", desc: "Connect directly and start your next big project together", emoji: "🚀" }
-            ].map((item, index) => (
-              <div key={index} className="text-center group">
-                <div className="w-20 h-20 bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                  <span className="text-3xl">{item.emoji}</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="text-center p-6 rounded-xl bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-[#CAFE33]/10 hover:border-[#CAFE33]/30 transition-all duration-300"
+              >
+                <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] bg-clip-text text-transparent mb-2">
+                  {stat.number}
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-white">{item.title}</h3>
-                <p className="text-gray-400 leading-relaxed max-w-sm mx-auto">{item.desc}</p>
+                <div className="text-gray-300 font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Final CTA */}
-      <div className="py-24 px-4 bg-gradient-to-r from-[#CAFE33]/10 via-purple-500/10 to-[#CAFE33]/10">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-4xl sm:text-6xl font-black mb-8">
-            Ready to Find Your <br/>
-            <span className="bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] bg-clip-text text-transparent">Perfect Match?</span>
-          </h2>
-          <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto font-light leading-relaxed">
-            Join the next wave of campus creators. Your future co-founder is waiting! 🌟
-          </p>
-          <Button
-            onClick={onGetStarted}
-            className="bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] text-black hover:from-[#B8E62E] hover:to-[#CAFE33] font-black px-12 py-6 rounded-2xl text-2xl transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-[#CAFE33]/25"
-          >
-            Start Your Journey Today
-            <Sparkles className="ml-3 h-7 w-7" />
-          </Button>
-          <div className="flex items-center justify-center mt-8 text-gray-400">
-            <CheckCircle className="h-6 w-6 mr-3 text-[#CAFE33]" />
-            <span className="text-lg font-medium">Free forever • No credit card required • Join in 2 minutes</span>
+      {/* Testimonials with Modern Cards */}
+      <div className="py-24 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-black mb-6">
+              What Our Users <span className="text-[#CAFE33]">Say</span> 💬
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {testimonials.map((testimonial) => (
+              <Card
+                key={testimonial.name}
+                className="group relative overflow-hidden border-0 bg-gradient-to-br from-gray-900 to-gray-800 hover:from-[#CAFE33]/10 hover:to-purple-500/10 transition-all duration-500"
+              >
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <img
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      className="w-12 h-12 rounded-full"
+                    />
+                    <div>
+                      <div className="font-bold text-[#CAFE33]">{testimonial.name}</div>
+                      <div className="text-gray-400">{testimonial.role}</div>
+                    </div>
+                  </div>
+                  <p className="text-gray-300 italic">"{testimonial.text}"</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 py-12 px-4">
+      {/* Final CTA with Animated Background */}
+      <div className="py-24 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#CAFE33]/10 via-purple-500/10 to-[#CAFE33]/10"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-[#CAFE33] rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+          <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-[#B8E62E] rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+        </div>
+        <div className="max-w-5xl mx-auto text-center relative">
+          <h2 className="text-4xl sm:text-6xl font-black mb-8">
+            Ready to Discover Your <br/>
+            <span className="bg-gradient-to-r from-[#CAFE33] via-[#B8E62E] to-[#CAFE33] bg-clip-text text-transparent bg-size-200 animate-gradient">
+              Perfect Content? 🎯
+            </span>
+          </h2>
+          <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto font-light leading-relaxed">
+            Join thousands of users exploring their interests and finding amazing recommendations! ✨
+          </p>
+          <Button
+            onClick={onGetStarted}
+            className="group relative bg-gradient-to-r from-[#CAFE33] to-[#B8E62E] text-black hover:from-[#B8E62E] hover:to-[#CAFE33] font-black px-12 py-6 rounded-2xl text-2xl transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-[#CAFE33]/25"
+          >
+            Start Your Journey Today
+            <Sparkles className="ml-3 h-7 w-7" />
+            <div className="absolute inset-0 rounded-2xl bg-white/20 blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          </Button>
+          <div className="flex items-center justify-center mt-8 text-gray-400">
+            <CheckCircle className="h-6 w-6 mr-3 text-[#CAFE33]" />
+            <span className="text-lg font-medium">Free forever • No credit card required • Join in 2 minutes ⚡️</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer with Gradient Border */}
+      <footer className="border-t border-gradient-to-r from-[#CAFE33]/30 via-purple-500/30 to-[#CAFE33]/30 py-12 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <img 
             src="/logo.png" 
             alt="Fyndly Logo" 
-            className="h-8 w-auto mx-auto mb-4"
+            className="h-8 w-auto mx-auto mb-4 hover:scale-105 transition-transform"
           />
-          <p className="text-gray-400">Built by SJ with ❤️ 2025</p>
+          <p className="text-gray-400">Built with 💚 by SJ • 2025</p>
         </div>
       </footer>
+
+      {/* Add these styles to your global CSS or within a style tag */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-float {
+          animation: float 3s ease-in-out infinite;
+        }
+        .animate-gradient {
+          animation: gradient 8s linear infinite;
+        }
+        .bg-size-200 {
+          background-size: 200% 200%;
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </div>
   );
 };

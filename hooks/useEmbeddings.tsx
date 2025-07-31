@@ -1,4 +1,3 @@
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
 export const useEmbeddings = () => {
@@ -15,43 +14,27 @@ export const useEmbeddings = () => {
         return false;
       }
 
-      // Get the current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        toast({
-          title: "Error",
-          description: "Authentication error. Please try logging out and back in.",
-          variant: "destructive"
-        });
-        return false;
-      }
-      if (!session) {
-        toast({
-          title: "Error",
-          description: "No active session. Please log in again.",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // Call the generate-embeddings edge function
-      const { data, error } = await supabase.functions.invoke('generate-embeddings', {
-        body: { userId: userId.trim() },
+      // Call the generate-embedding API route
+      const response = await fetch('/api/user/generate-embedding', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: userId.trim() }),
       });
 
-      if (error) {
+      if (!response.ok) {
+        const errorData = await response.json();
         toast({
           title: "Error",
-          description: `Failed to generate user embedding: ${error.message}`,
+          description: `Failed to generate user embedding: ${errorData.error || 'Unknown error'}`,
           variant: "destructive"
         });
         return false;
       }
 
-      if (data && !data.success) {
+      const data = await response.json();
+      if (!data.success) {
         toast({
           title: "Error",
           description: "Failed to generate user embedding. Please try again.",

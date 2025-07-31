@@ -82,11 +82,11 @@ const ChatBubble = ({
         } rounded-2xl p-4 sm:p-6 shadow-lg w-full`}
       >
         {message.type === "user" || !message.isFormatted ? (
-          <p className={message.type === "user" ? "text-white" : "text-gray-200"}>
+          <p className={message.type === "user" ? "text-gray-900" : "text-gray-200"}>
             {typeof message.content === 'string' ? message.content : message.content.prompt}
           </p>
         ) : (
-          <div className={message.type === "user" ? "text-white" : "text-gray-800 formatted-content"}>
+          <div className={message.type === "user" ? "text-gray-900" : "text-gray-800 formatted-content"}>
             <FormattedMessage content={typeof message.content === 'string' ? message.content : message.content.prompt} />
           </div>
         )}

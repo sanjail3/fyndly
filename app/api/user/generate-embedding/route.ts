@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
-import { generateAndSaveEmbedding } from '@/lib/server/embedding-generation';
+import { generateAndSaveEmbeddingPrisma } from '@/lib/server/embedding-generation-prisma';
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     );
 
     console.log("Generating embedding for user:", userId);
-    const success = await generateAndSaveEmbedding(userId.trim(), serviceSupabase);
+    const success = await generateAndSaveEmbeddingPrisma(userId.trim(), serviceSupabase);
 
     if (!success) {
       return NextResponse.json({ error: 'Failed to generate user embedding' }, { status: 500 });
