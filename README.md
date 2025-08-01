@@ -3,8 +3,9 @@
 > **Winner Submission for Qloo Global Hackathon 2025**  
 > *Shaping the future of intelligence using Qloo's Taste AI™ and LLMs*
 
-[![Demo Video](https://youtu.be/X9-pGCnOUIM)
-[![Live Demo](https://www.fyndly.in/)
+
+[![Demo Video](https://img.shields.io/badge/📹-Watch%20Demo-red?style=for-the-badge)](https://youtu.be/X9-pGCnOUIM)
+[![Live Demo](https://img.shields.io/badge/🚀-Live%20Demo-brightgreen?style=for-the-badge)](https://www.fyndly.in/))
 
 
 ##  Project Overview
