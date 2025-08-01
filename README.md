@@ -391,8 +391,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **🎯 Fyndly - Discover What Interests You**
 
-[![Qloo Hackathon](https://img.shields.io/badge/🏆-Qloo%20Hackathon%202025-brightgreen?style=for-the-badge)](https://qloo.com/hackathon)
-[![Built with Qloo](https://img.shields.io/badge/🎯-Built%20with%20Qloo-blue?style=for-the-badge)](https://qloo.com)
+[![Qloo Hackathon](https://img.shields.io/badge/🏆-Qloo%20Hackathon%202025-brightgreen?style=for-the-badge)](https://qloo-hackathon.devpost.com/)
+[![Built with Qloo](https://img.shields.io/badge/🎯-Built%20with%20Qloo-blue?style=for-the-badge)](https://www.qloo.com/)
 [![Powered by AI](https://img.shields.io/badge/🤖-Powered%20by%20AI-purple?style=for-the-badge)](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
 
 *Made with 💚 for the Qloo Global Hackathon 2025*
